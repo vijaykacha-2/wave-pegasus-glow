@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { ArrowRight, Shield, Zap, Users, Star } from "lucide-react";
 import WaveAnimation from "../components/WaveAnimation";
@@ -43,9 +42,9 @@ const Home = () => {
 
   return (
     <div className="pt-16">
-      {/* Hero Section */}
+      {/* Hero Section with Wave Animation */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        <WaveAnimation className="opacity-30" />
+        <WaveAnimation className="opacity-40" />
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
@@ -181,10 +180,8 @@ const Home = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="relative py-20 overflow-hidden">
-        <WaveAnimation className="opacity-20" />
-        
+      {/* CTA Section - NO WAVE ANIMATION */}
+      <section className="relative py-20 overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}

@@ -8,14 +8,14 @@ const WaveGeometry = () => {
   const meshRef = useRef<Mesh>(null);
   
   const { geometry, material } = useMemo(() => {
-    const geo = new THREE.PlaneGeometry(40, 15, 200, 100);
+    const geo = new THREE.PlaneGeometry(50, 20, 300, 150);
     const mat = new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 0 },
-        colorDeep: { value: new THREE.Color("#1e40af") },
-        colorMid: { value: new THREE.Color("#3b82f6") },
-        colorLight: { value: new THREE.Color("#93c5fd") },
-        colorWhite: { value: new THREE.Color("#ffffff") },
+        colorBase: { value: new THREE.Color("#ffffff") },
+        colorMid: { value: new THREE.Color("#60a5fa") },
+        colorDeep: { value: new THREE.Color("#2563eb") },
+        colorDark: { value: new THREE.Color("#1d4ed8") },
       },
       vertexShader: `
         uniform float time;
@@ -25,17 +25,17 @@ const WaveGeometry = () => {
         
         void main() {
           vUv = uv;
-          
           vec3 pos = position;
           
-          // Create multiple wave layers for smooth, flowing motion
-          float wave1 = sin(pos.x * 0.15 + time * 1.2) * 1.5;
-          float wave2 = sin(pos.x * 0.25 + pos.y * 0.1 + time * 0.8) * 1.0;
-          float wave3 = sin(pos.x * 0.35 + time * 1.5) * 0.8;
-          float wave4 = sin(pos.x * 0.45 + pos.y * 0.05 + time * 0.6) * 0.6;
+          // Create smooth flowing horizontal waves like the reference
+          float wave1 = sin(pos.x * 0.08 + time * 0.6) * 2.2;
+          float wave2 = sin(pos.x * 0.12 + pos.y * 0.03 + time * 0.4) * 1.8;
+          float wave3 = sin(pos.x * 0.06 + time * 0.8) * 1.5;
+          float wave4 = sin(pos.x * 0.15 + pos.y * 0.02 + time * 0.3) * 1.2;
+          float wave5 = sin(pos.x * 0.04 + time * 0.5) * 2.5;
           
-          // Combine waves for natural flowing motion
-          pos.z = wave1 + wave2 + wave3 + wave4;
+          // Combine for natural flowing motion
+          pos.z = wave1 + wave2 + wave3 + wave4 + wave5;
           
           vWave = pos.z;
           vPosition = pos;
@@ -44,36 +44,38 @@ const WaveGeometry = () => {
         }
       `,
       fragmentShader: `
-        uniform vec3 colorDeep;
+        uniform vec3 colorBase;
         uniform vec3 colorMid;
-        uniform vec3 colorLight;
-        uniform vec3 colorWhite;
+        uniform vec3 colorDeep;
+        uniform vec3 colorDark;
         varying vec2 vUv;
         varying float vWave;
         varying vec3 vPosition;
         
         void main() {
-          // Normalize wave value
-          float wave = (vWave + 3.0) / 6.0;
+          // Normalize wave height
+          float wave = (vWave + 8.0) / 16.0;
+          float depth = 1.0 - vUv.y;
           
-          // Create depth-based color mixing
-          float depth = vUv.y;
+          // Create the gradient layers like the reference
+          vec3 baseColor = mix(colorBase, colorMid, depth * 0.3);
+          baseColor = mix(baseColor, colorDeep, depth * 0.6);
+          baseColor = mix(baseColor, colorDark, depth * 0.8);
           
-          // Base color gradient from deep blue to light blue
-          vec3 baseColor = mix(colorDeep, colorMid, depth);
-          baseColor = mix(baseColor, colorLight, depth * depth);
+          // Add wave-based color variation
+          float waveInfluence = smoothstep(0.3, 0.8, wave);
+          baseColor = mix(baseColor, colorDeep, waveInfluence * 0.4);
           
-          // Add white highlights on wave peaks
-          float highlight = smoothstep(0.6, 1.0, wave);
-          vec3 finalColor = mix(baseColor, colorWhite, highlight * 0.7);
+          // Create flowing highlights
+          float flowX = sin(vPosition.x * 0.05 + vWave * 0.3) * 0.5 + 0.5;
+          float highlight = smoothstep(0.7, 1.0, wave) * flowX;
+          vec3 finalColor = mix(baseColor, colorBase, highlight * 0.8);
           
-          // Create flowing light effect
-          float flowingLight = sin(vPosition.x * 0.1 + vWave * 0.5) * 0.5 + 0.5;
-          finalColor = mix(finalColor, colorLight, flowingLight * 0.3 * highlight);
-          
-          // Gradient alpha for smooth blending
-          float alpha = 0.9 - depth * 0.4;
-          alpha *= smoothstep(-2.0, 2.0, vWave);
+          // Smooth alpha blending
+          float alpha = 0.85;
+          alpha *= smoothstep(0.0, 0.2, vUv.y);
+          alpha *= smoothstep(1.0, 0.8, vUv.y);
+          alpha *= smoothstep(-6.0, 6.0, vWave);
           
           gl_FragColor = vec4(finalColor, alpha);
         }
@@ -91,19 +93,19 @@ const WaveGeometry = () => {
     }
   });
 
-  return <mesh ref={meshRef} geometry={geometry} material={material} rotation={[-Math.PI / 8, 0, 0]} position={[0, -2, 0]} />;
+  return <mesh ref={meshRef} geometry={geometry} material={material} rotation={[-Math.PI / 12, 0, 0]} position={[0, -3, 0]} />;
 };
 
 const WaveAnimation = ({ className }: { className?: string }) => {
   return (
     <div className={`absolute inset-0 overflow-hidden ${className}`}>
       <Canvas
-        camera={{ position: [0, 5, 12], fov: 60 }}
+        camera={{ position: [0, 8, 15], fov: 65 }}
         style={{ background: "transparent" }}
       >
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[10, 10, 5]} intensity={0.8} />
-        <directionalLight position={[-10, -10, -5]} intensity={0.4} color="#93c5fd" />
+        <ambientLight intensity={0.7} />
+        <directionalLight position={[15, 15, 8]} intensity={0.9} />
+        <directionalLight position={[-10, -10, -5]} intensity={0.3} color="#60a5fa" />
         <WaveGeometry />
       </Canvas>
     </div>
